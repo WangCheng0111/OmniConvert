@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "OmniConvert (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "OmniConvert (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
