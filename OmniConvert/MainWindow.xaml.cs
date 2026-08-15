@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ namespace OmniConvert
     public sealed partial class MainWindow : Window
     {
         private AppWindow m_AppWindow;
+
+        private readonly Storyboard _activationStoryboard = new();
 
         public MainWindow()
         {
@@ -82,16 +85,44 @@ namespace OmniConvert
 
         private void MainWindow_Activated(object sender, WindowActivatedEventArgs args)
         {
-            if (args.WindowActivationState == WindowActivationState.Deactivated)
+            AnimateWindowActivation(args.WindowActivationState == WindowActivationState.Deactivated);
+        }
+
+        private void AnimateWindowActivation(bool isDeactivated)
+        {
+            var duration = TimeSpan.FromMilliseconds(200);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            var targetBrush = (SolidColorBrush)App.Current.Resources[
+                isDeactivated ? "WindowCaptionForegroundDisabled" : "WindowCaptionForeground"];
+            var targetOpacity = isDeactivated ? 0.4 : 1.0;
+
+            _activationStoryboard.Stop();
+
+            var foregroundAnimation = new ColorAnimation
             {
-                TitleBarTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForegroundDisabled"];
-            }
-            else
+                From = ((SolidColorBrush)TitleBarTextBlock.Foreground).Color,
+                To = targetBrush.Color,
+                Duration = duration,
+                EasingFunction = ease
+            };
+            Storyboard.SetTarget(foregroundAnimation, TitleBarTextBlock);
+            Storyboard.SetTargetProperty(foregroundAnimation, "(TextBlock.Foreground).(SolidColorBrush.Color)");
+
+            var opacityAnimation = new DoubleAnimation
             {
-                TitleBarTextBlock.Foreground =
-                    (SolidColorBrush)App.Current.Resources["WindowCaptionForeground"];
-            }
+                From = TitleBarIcon.Opacity,
+                To = targetOpacity,
+                Duration = duration,
+                EasingFunction = ease
+            };
+            Storyboard.SetTarget(opacityAnimation, TitleBarIcon);
+            Storyboard.SetTargetProperty(opacityAnimation, "Opacity");
+
+            _activationStoryboard.Children.Clear();
+            _activationStoryboard.Children.Add(foregroundAnimation);
+            _activationStoryboard.Children.Add(opacityAnimation);
+            _activationStoryboard.Begin();
         }
     }
 }

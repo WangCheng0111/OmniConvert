@@ -29,7 +29,7 @@
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/>
             </Grid.ColumnDefinitions>
             <Image x:Name="TitleBarIcon" 
-           Source="ms-appx:///Assets/StoreLogo.png"
+           Source="ms-appx:///Assets/GalleryIcon.ico"
            Grid.Column="1"
            Width="16" Height="16"
            Margin="8,0,4,0"/>
