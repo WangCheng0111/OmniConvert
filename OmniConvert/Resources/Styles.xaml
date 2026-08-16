@@ -15,40 +15,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Grid x:Name="RootGrid">
-                        <Grid.Background>
-                            <SolidColorBrush x:Name="RootGridBackground" Color="Transparent" />
-                        </Grid.Background>
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition From="Normal" To="PointerOver" GeneratedDuration="0:0:0.2" />
-                                    <VisualTransition From="PointerOver" To="Normal" GeneratedDuration="0:0:0.2" />
-                                    <VisualTransition From="Normal" To="Pressed" GeneratedDuration="0" />
-                                    <VisualTransition From="PointerOver" To="Pressed" GeneratedDuration="0" />
-                                    <VisualTransition From="Pressed" To="Normal" GeneratedDuration="0" />
-                                    <VisualTransition From="Pressed" To="PointerOver" GeneratedDuration="0" />
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="PointerOver">
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="RootGridBackground"
-                                                        Storyboard.TargetProperty="Color"
-                                                        To="#D9DDE2"
-                                                        Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Pressed">
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="RootGridBackground"
-                                                        Storyboard.TargetProperty="Color"
-                                                        To="#C2C5CA"
-                                                        Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Disabled" />
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
+                    <Grid Background="{TemplateBinding Background}">
                         <ContentPresenter Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -72,40 +39,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Grid x:Name="RootGrid">
-                        <Grid.Background>
-                            <SolidColorBrush x:Name="RootGridBackground" Color="Transparent" />
-                        </Grid.Background>
-                        <VisualStateManager.VisualStateGroups>
-                            <VisualStateGroup x:Name="CommonStates">
-                                <VisualStateGroup.Transitions>
-                                    <VisualTransition From="Normal" To="PointerOver" GeneratedDuration="0:0:0.2" />
-                                    <VisualTransition From="PointerOver" To="Normal" GeneratedDuration="0:0:0.2" />
-                                    <VisualTransition From="Normal" To="Pressed" GeneratedDuration="0" />
-                                    <VisualTransition From="PointerOver" To="Pressed" GeneratedDuration="0" />
-                                    <VisualTransition From="Pressed" To="Normal" GeneratedDuration="0" />
-                                    <VisualTransition From="Pressed" To="PointerOver" GeneratedDuration="0" />
-                                </VisualStateGroup.Transitions>
-                                <VisualState x:Name="Normal" />
-                                <VisualState x:Name="PointerOver">
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="RootGridBackground"
-                                                        Storyboard.TargetProperty="Color"
-                                                        To="#E81123"
-                                                        Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Pressed">
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="RootGridBackground"
-                                                        Storyboard.TargetProperty="Color"
-                                                        To="#EC6D7A"
-                                                        Duration="0" />
-                                    </Storyboard>
-                                </VisualState>
-                                <VisualState x:Name="Disabled" />
-                            </VisualStateGroup>
-                        </VisualStateManager.VisualStateGroups>
+                    <Grid Background="{TemplateBinding Background}">
                         <ContentPresenter Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"

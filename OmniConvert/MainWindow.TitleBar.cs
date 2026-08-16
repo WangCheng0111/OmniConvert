@@ -25,6 +25,12 @@ namespace OmniConvert
         private static readonly Color IconDimmedColor = Color.FromArgb(0xFF, 0xA0, 0xA0, 0xA0);
         private static readonly Color IconWhiteColor = Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
 
+        private static readonly Color TransparentColor = Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF);
+        private static readonly Color HoverBackground = Color.FromArgb(0xFF, 0xD9, 0xDD, 0xE2);
+        private static readonly Color PressedBackground = Color.FromArgb(0xFF, 0xC2, 0xC5, 0xCA);
+        private static readonly Color CloseHoverBackground = Color.FromArgb(0xFF, 0xE8, 0x11, 0x23);
+        private static readonly Color ClosePressedBackground = Color.FromArgb(0xFF, 0xEC, 0x6D, 0x7A);
+
         private AppWindow _appWindow;
         private InputNonClientPointerSource _nonClientInputSrc = null!;
         private bool _isApplyingRegions;
@@ -32,6 +38,7 @@ namespace OmniConvert
         private bool _isWindowDeactivated;
         private Button? _hoveredButton;
         private Button? _pressedButton;
+        private Point _lastPointerPoint;
         private RectInt32 _minimizeRect;
         private RectInt32 _maximizeRect;
         private RectInt32 _closeRect;
@@ -217,26 +224,26 @@ namespace OmniConvert
 
             if (_hoveredButton != null)
             {
-                GoToButtonState(_hoveredButton, StateNormal);
-                UpdateCloseButtonIcon(_hoveredButton, StateNormal, AnimationDuration);
+                ApplyButtonVisual(_hoveredButton, StateNormal, AnimationDuration);
             }
 
             _hoveredButton = button;
 
             if (_hoveredButton != null)
             {
-                GoToButtonState(_hoveredButton, StatePointerOver);
-                UpdateCloseButtonIcon(_hoveredButton, StatePointerOver, AnimationDuration);
+                ApplyButtonVisual(_hoveredButton, StatePointerOver, AnimationDuration);
             }
         }
 
         private void OnNonClientPointerEntered(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
         {
-            UpdateButtonHover(args.Point);
+            // 进入非客户区时 Point 不可靠，悬停状态交给后续的 PointerMoved 处理
         }
 
         private void OnNonClientPointerMoved(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
         {
+            _lastPointerPoint = args.Point;
+
             if (_pressedButton == null)
             {
                 UpdateButtonHover(args.Point);
@@ -244,13 +251,13 @@ namespace OmniConvert
             }
 
             bool inside = GetButtonAtPoint(args.Point) == _pressedButton;
-            var stateName = inside ? StatePressed : StateNormal;
-            GoToButtonState(_pressedButton, stateName);
-            UpdateCloseButtonIcon(_pressedButton, stateName, TimeSpan.Zero);
+            ApplyButtonVisual(_pressedButton, inside ? StatePressed : StateNormal, TimeSpan.Zero);
         }
 
         private void OnNonClientPointerPressed(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
         {
+            _lastPointerPoint = args.Point;
+
             var button = GetButtonAtPoint(args.Point);
             if (button == null)
             {
@@ -258,14 +265,15 @@ namespace OmniConvert
             }
 
             _pressedButton = button;
-            GoToButtonState(button, StatePressed);
-            UpdateCloseButtonIcon(button, StatePressed, TimeSpan.Zero);
+            ApplyButtonVisual(button, StatePressed, TimeSpan.Zero);
         }
 
         private void OnNonClientPointerReleased(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
         {
             _pressedButton = null;
-            UpdateButtonHover(args.Point);
+            // 松开事件上报的 Point 是按下捕获点而非真实位置，
+            // 必须用最近一次 PointerMoved 的位置恢复悬停状态，否则会造成状态闪跳。
+            UpdateButtonHover(_lastPointerPoint);
         }
 
         private void OnNonClientPointerExited(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
@@ -276,26 +284,39 @@ namespace OmniConvert
                 return;
             }
 
-            GoToButtonState(_hoveredButton, StateNormal);
-            UpdateCloseButtonIcon(_hoveredButton, StateNormal, AnimationDuration);
+            ApplyButtonVisual(_hoveredButton, StateNormal, AnimationDuration);
             _hoveredButton = null;
         }
 
-        private static void GoToButtonState(Button button, string stateName)
+        private void ApplyButtonVisual(Button button, string stateName, TimeSpan duration)
         {
-            VisualStateManager.GoToState(button, stateName, true);
-        }
+            Color background;
+            Color foreground;
 
-        private void UpdateCloseButtonIcon(Button button, string stateName, TimeSpan duration)
-        {
-            if (button != CloseButton)
+            switch (stateName)
             {
-                return;
+                case StatePressed:
+                    background = button == CloseButton ? ClosePressedBackground : PressedBackground;
+                    foreground = button == CloseButton ? IconWhiteColor : BaseIconColor;
+                    break;
+                case StatePointerOver:
+                    background = button == CloseButton ? CloseHoverBackground : HoverBackground;
+                    foreground = button == CloseButton ? IconWhiteColor : BaseIconColor;
+                    break;
+                default:
+                    background = TransparentColor;
+                    foreground = BaseIconColor;
+                    break;
             }
 
-            AnimateButtonForeground(button,
-                stateName == StateNormal ? BaseIconColor : IconWhiteColor,
-                duration);
+            AnimateButtonBackground(button, background, duration);
+            AnimateButtonForeground(button, foreground, duration);
+        }
+
+        private void AnimateButtonBackground(Button button, Color to, TimeSpan duration)
+        {
+            AnimateColor(button, "(Control.Background).(SolidColorBrush.Color)",
+                ((SolidColorBrush)button.Background).Color, to, duration);
         }
 
         private void AnimateButtonForeground(Button button, Color to, TimeSpan duration)
@@ -311,8 +332,7 @@ namespace OmniConvert
             {
                 From = from,
                 To = to,
-                Duration = duration,
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                Duration = duration
             };
             Storyboard.SetTarget(animation, target);
             Storyboard.SetTargetProperty(animation, propertyPath);
