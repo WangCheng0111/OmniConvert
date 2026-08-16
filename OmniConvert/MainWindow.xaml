@@ -15,6 +15,11 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
+        <Border x:Name="BackgroundOverlay"
+                Grid.RowSpan="2"
+                Background="#80FFFFFF"
+                IsHitTestVisible="False"/>
+
         <Grid x:Name="AppTitleBar" Height="48">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="LeftPaddingColumn" Width="0"/>
