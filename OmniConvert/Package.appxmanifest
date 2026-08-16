@@ -18,7 +18,7 @@
   <Properties>
     <DisplayName>OmniConvert</DisplayName>
     <PublisherDisplayName>31059</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
+    <Logo>Assets\Tiles\StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -38,10 +38,16 @@
         DisplayName="OmniConvert"
         Description="OmniConvert"
         BackgroundColor="transparent"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        Square150x150Logo="Assets\Tiles\MedTile.png"
+        Square44x44Logo="Assets\Tiles\AppList.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Tiles\WideTile.png"  Square71x71Logo="Assets\Tiles\SmallTile.png" Square310x310Logo="Assets\Tiles\LargeTile.png">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="wide310x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile >
+        <uap:SplashScreen Image="Assets\Tiles\SplashScreen.png" />
       </uap:VisualElements>
     </Application>
   </Applications>
