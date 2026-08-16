@@ -11,6 +11,8 @@ namespace OmniConvert
         {
             this.InitializeComponent();
 
+            _captionButtons = new[] { MinimizeButton, MaximizeButton, CloseButton };
+
             _appWindow = this.AppWindow;
             _appWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
             InitializeNonClientInput();

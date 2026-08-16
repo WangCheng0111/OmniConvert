@@ -38,7 +38,7 @@ namespace OmniConvert
 
         private Color BaseIconColor => _isWindowDeactivated ? IconDimmedColor : IconBaseColor;
 
-        private Button[] CaptionButtons => new Button[] { MinimizeButton, MaximizeButton, CloseButton };
+        private readonly Button[] _captionButtons = null!;
 
         [DllImport("user32.dll")]
         private static extern bool IsZoomed(IntPtr hWnd);
@@ -358,7 +358,7 @@ namespace OmniConvert
                 TitleBarIcon.Opacity,
                 targetOpacity);
 
-            foreach (var button in CaptionButtons)
+            foreach (var button in _captionButtons)
             {
                 AddAnimationTo(storyboard, button,
                     "(Control.Foreground).(SolidColorBrush.Color)",
