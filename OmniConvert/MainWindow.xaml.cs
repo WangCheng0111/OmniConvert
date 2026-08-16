@@ -12,6 +12,7 @@ namespace OmniConvert
             this.InitializeComponent();
 
             _appWindow = this.AppWindow;
+            _appWindow.SetIcon("Assets/Tiles/GalleryIcon.ico");
             InitializeNonClientInput();
             Activated += MainWindow_Activated;
             AppTitleBar.SizeChanged += AppTitleBar_SizeChanged;
