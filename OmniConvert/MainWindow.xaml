@@ -51,7 +51,6 @@
                        Margin="0,16,8,16"
                        VerticalAlignment="Stretch"
                        Fill="#40999999"/>
-
             <Button x:Name="SettingsButton"
                     Grid.Column="3"
                     HorizontalAlignment="Right"
@@ -95,6 +94,8 @@
                           Foreground="{Binding Foreground, ElementName=CloseButton}"/>
             </Button>
         </Grid>
+
+        <views:ConverterPage Grid.Row="1" />
 
         <views:SettingsPage x:Name="settingsHost"
                             Grid.RowSpan="2" />

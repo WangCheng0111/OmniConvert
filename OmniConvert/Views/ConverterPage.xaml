@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="OmniConvert.Views.ConverterPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:OmniConvert.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Grid Margin="16,0,16,16" ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+
+        <Border x:Name="MainCard"
+                Grid.Column="0"
+                AllowDrop="True"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                DragEnter="MainCard_DragEnter"
+                DragOver="MainCard_DragOver"
+                DragLeave="MainCard_DragLeave"
+                Drop="MainCard_Drop">
+            <Grid IsHitTestVisible="False">
+                <TextBlock x:Name="DropHintText"
+                           Text="把文件丢给我"
+                           FontFamily="{StaticResource HarmonyOSRegular}"
+                           FontSize="14"
+                           Foreground="{StaticResource CardHintForegroundBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                <Image x:Name="DropIcon"
+                       Source="ms-appx:///Assets/Tiles/GalleryIcon.ico"
+                       Width="48"
+                       Height="48"
+                       Opacity="0"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <Border x:Name="SideCard"
+                Grid.Column="1"
+                Background="{StaticResource CardBackgroundBrush}"
+                BorderBrush="{StaticResource CardBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12">
+            <StackPanel Margin="12">
+                <controls:CustomComboBox x:Name="TargetFormatBox"
+                                         Width="240"
+                                         HorizontalAlignment="Center"
+                                         IsEnabled="False" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
