@@ -5,6 +5,7 @@
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#B0FFFFFF" />
     <SolidColorBrush x:Key="CardBorderBrush" Color="#40999999" />
     <SolidColorBrush x:Key="CardHintForegroundBrush" Color="#80909090" />
+    <SolidColorBrush x:Key="LabelForegroundBrush" Color="#666666" />
     <SolidColorBrush x:Key="DropCardBorderBrush" Color="#0078D4" />
     <SolidColorBrush x:Key="DropCardBackgroundBrush" Color="#B0E5E5E5" />
 

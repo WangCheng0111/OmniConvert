@@ -50,11 +50,27 @@
                 BorderBrush="{StaticResource CardBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12">
-            <StackPanel Margin="12">
+            <StackPanel Margin="16">
+                <TextBlock Text="目标格式"
+                           FontFamily="{StaticResource HarmonyOSRegular}"
+                           FontSize="13"
+                           Foreground="{StaticResource LabelForegroundBrush}"
+                           HorizontalAlignment="Left"
+                           Margin="0,0,0,10" />
+
                 <controls:CustomComboBox x:Name="TargetFormatBox"
                                          Width="240"
                                          HorizontalAlignment="Center"
                                          IsEnabled="False" />
+
+                <Button x:Name="StartConvertButton"
+                        Width="240"
+                        Height="32"
+                        Margin="0,16,0,0"
+                        HorizontalAlignment="Center"
+                        Style="{StaticResource StartConvertButtonStyle}"
+                        Content="开始转换"
+                        IsEnabled="False" />
             </StackPanel>
         </Border>
     </Grid>
