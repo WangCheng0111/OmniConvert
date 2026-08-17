@@ -167,12 +167,17 @@ namespace OmniConvert
 
             _minimizeRect = GetRegionRect(MinimizeButton, scaleAdjustment);
             _maximizeRect = GetRegionRect(MaximizeButton, scaleAdjustment);
-            _closeRect = GetRegionRect(CloseButton, scaleAdjustment);
+            var settingsRect = GetRegionRect(SettingsButton, scaleAdjustment);
+            var closeRect = GetRegionRect(CloseButton, scaleAdjustment);
+            // 关闭按钮与窗口右边缘之间的留白也纳入关闭热区，保证角落点击有效
+            var titleBarRightEdge = (int)Math.Round(AppTitleBar.ActualWidth * scaleAdjustment);
+            _closeRect = new RectInt32(closeRect.X, closeRect.Y, titleBarRightEdge - closeRect.X, closeRect.Height);
 
             ApplyRegionRects(NonClientRegionKind.Caption, new[] { captionRect });
             ApplyRegionRects(NonClientRegionKind.Minimize, new[] { _minimizeRect });
             ApplyRegionRects(NonClientRegionKind.Maximize, new[] { _maximizeRect });
             ApplyRegionRects(NonClientRegionKind.Close, new[] { _closeRect });
+            ApplyRegionRects(NonClientRegionKind.Passthrough, new[] { settingsRect });
         }
 
         private RectInt32 GetRegionRect(FrameworkElement element, double scaleAdjustment)
