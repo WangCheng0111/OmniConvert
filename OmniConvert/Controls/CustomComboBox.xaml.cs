@@ -17,6 +17,9 @@ public sealed partial class CustomComboBox : UserControl
 {
     private static readonly TimeSpan DropDownAnimationDuration = TimeSpan.FromMilliseconds(200);
 
+    private static readonly SolidColorBrush DisplayTextNormalBrush = new(Color.FromArgb(0xFF, 0x33, 0x33, 0x33));
+    private static readonly SolidColorBrush DisplayTextPlaceholderBrush = new(Color.FromArgb(0xFF, 0x80, 0x90, 0x90));
+
     private readonly SolidColorBrush _bodyBrush = new(Color.FromArgb(0, 255, 255, 255));
     private readonly List<object> _itemMap = new();
     private readonly Storyboard _openStoryboard = new();
@@ -193,6 +196,10 @@ public sealed partial class CustomComboBox : UserControl
         DependencyProperty.Register(nameof(DisplayMemberPath), typeof(string), typeof(CustomComboBox),
             new PropertyMetadata(null, OnDisplayMemberPathChanged));
 
+    public static readonly DependencyProperty PlaceholderTextProperty =
+        DependencyProperty.Register(nameof(PlaceholderText), typeof(string), typeof(CustomComboBox),
+            new PropertyMetadata(string.Empty, OnPlaceholderTextChanged));
+
     public IEnumerable? ItemsSource
     {
         get => (IEnumerable?)GetValue(ItemsSourceProperty);
@@ -211,6 +218,12 @@ public sealed partial class CustomComboBox : UserControl
         set => SetValue(DisplayMemberPathProperty, value);
     }
 
+    public string? PlaceholderText
+    {
+        get => (string?)GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
+    }
+
     private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is CustomComboBox c) c.ApplyItemsSource();
@@ -224,6 +237,11 @@ public sealed partial class CustomComboBox : UserControl
     private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is CustomComboBox c) c.ApplyDisplayMemberPath();
+    }
+
+    private static void OnPlaceholderTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CustomComboBox c) c.UpdateDisplayText();
     }
 
     private void ApplyItemsSource()
@@ -260,7 +278,16 @@ public sealed partial class CustomComboBox : UserControl
 
     private void UpdateDisplayText()
     {
-        DisplayText.Text = GetDisplayText(SelectedItem);
+        if (SelectedItem is null && !string.IsNullOrEmpty(PlaceholderText))
+        {
+            DisplayText.Text = PlaceholderText;
+            DisplayText.Foreground = DisplayTextPlaceholderBrush;
+        }
+        else
+        {
+            DisplayText.Text = GetDisplayText(SelectedItem);
+            DisplayText.Foreground = DisplayTextNormalBrush;
+        }
     }
 
     private string GetDisplayText(object? item)

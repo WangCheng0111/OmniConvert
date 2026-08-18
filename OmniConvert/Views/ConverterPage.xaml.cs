@@ -17,7 +17,6 @@ public sealed partial class ConverterPage : Page
     public ConverterPage()
     {
         InitializeComponent();
-        TargetFormatBox.ItemsSource = new[] { "简体中文", "English", "日本語" };
     }
 
     private static Color GetResourceColor(string key)
@@ -70,6 +69,7 @@ public sealed partial class ConverterPage : Page
         AnimateTo(storyboard, MainCard, "(Border.Background).(SolidColorBrush.Color)",
             backgroundBrush.Color,
             GetResourceColor(enterDrop ? "DropCardBackgroundBrush" : "CardBackgroundBrush"));
+        AnimateTo(storyboard, EmptyStateImage, "Opacity", EmptyStateImage.Opacity, enterDrop ? 0 : 1);
         AnimateTo(storyboard, DropHintText, "Opacity", DropHintText.Opacity, enterDrop ? 0 : 1);
         AnimateTo(storyboard, DropIcon, "Opacity", DropIcon.Opacity, enterDrop ? 1 : 0);
 

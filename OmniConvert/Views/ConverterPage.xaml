@@ -27,13 +27,21 @@
                 DragLeave="MainCard_DragLeave"
                 Drop="MainCard_Drop">
             <Grid IsHitTestVisible="False">
-                <TextBlock x:Name="DropHintText"
-                           Text="把文件丢给我"
-                           FontFamily="{StaticResource HarmonyOSRegular}"
-                           FontSize="14"
-                           Foreground="{StaticResource CardHintForegroundBrush}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="20">
+                    <Image x:Name="EmptyStateImage"
+                           Source="ms-appx:///Assets/Images/empty_state.png"
+                           Width="260"
+                           Height="165"
+                           HorizontalAlignment="Center" />
+                    <TextBlock x:Name="DropHintText"
+                               Text="把文件丢给我"
+                               FontFamily="{StaticResource HarmonyOSRegular}"
+                               FontSize="16"
+                               Foreground="{StaticResource CardHintForegroundBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
                 <Image x:Name="DropIcon"
                        Source="ms-appx:///Assets/Tiles/GalleryIcon.ico"
                        Width="48"
@@ -61,6 +69,7 @@
                 <controls:CustomComboBox x:Name="TargetFormatBox"
                                          Width="240"
                                          HorizontalAlignment="Center"
+                                         PlaceholderText="请选择文件"
                                          IsEnabled="False" />
 
                 <Button x:Name="StartConvertButton"

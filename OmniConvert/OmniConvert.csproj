@@ -24,6 +24,9 @@
 
   <ItemGroup>
     <Content Include="Assets\Tiles\GalleryIcon.ico" />
+    <Content Include="Assets\Images\empty_state.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Fonts\HarmonyOS_SansSC_Black.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
