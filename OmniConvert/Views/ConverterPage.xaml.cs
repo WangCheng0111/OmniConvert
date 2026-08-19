@@ -2,8 +2,11 @@
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using OmniConvert.ViewModels;
 using System;
+using System.Linq;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 using Windows.UI;
 
 namespace OmniConvert.Views;
@@ -13,6 +16,8 @@ public sealed partial class ConverterPage : Page
     private static readonly TimeSpan DragAnimationDuration = TimeSpan.FromMilliseconds(150);
 
     private static readonly CubicEase DragAnimationEase = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+    public ConverterViewModel ViewModel { get; } = new();
 
     public ConverterPage()
     {
@@ -69,8 +74,7 @@ public sealed partial class ConverterPage : Page
         AnimateTo(storyboard, MainCard, "(Border.Background).(SolidColorBrush.Color)",
             backgroundBrush.Color,
             GetResourceColor(enterDrop ? "DropCardBackgroundBrush" : "CardBackgroundBrush"));
-        AnimateTo(storyboard, EmptyStateImage, "Opacity", EmptyStateImage.Opacity, enterDrop ? 0 : 1);
-        AnimateTo(storyboard, DropHintText, "Opacity", DropHintText.Opacity, enterDrop ? 0 : 1);
+        AnimateTo(storyboard, ContentHost, "Opacity", ContentHost.Opacity, enterDrop ? 0 : 1);
         AnimateTo(storyboard, DropIcon, "Opacity", DropIcon.Opacity, enterDrop ? 1 : 0);
 
         storyboard.Begin();
@@ -98,9 +102,13 @@ public sealed partial class ConverterPage : Page
         AnimateCardVisuals(false);
     }
 
-    private void MainCard_Drop(object sender, DragEventArgs e)
+    private async void MainCard_Drop(object sender, DragEventArgs e)
     {
         AnimateCardVisuals(false);
+
+        var items = await e.DataView.GetStorageItemsAsync();
+        var paths = items.OfType<StorageFile>().Select(f => f.Path);
+        ViewModel.AddFiles(paths);
     }
 }
 

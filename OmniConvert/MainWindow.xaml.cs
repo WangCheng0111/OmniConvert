@@ -27,6 +27,19 @@ namespace OmniConvert
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             settingsHost.CloseRequested += SettingsHost_CloseRequested;
 
+            MinimizeButton.Click += MinimizeButton_Click;
+            MaximizeButton.Click += MaximizeButton_Click;
+            CloseButton.Click += CloseButton_Click;
+
+            var captionButtons = new[] { MinimizeButton, MaximizeButton, CloseButton };
+            foreach (var button in captionButtons)
+            {
+                button.PointerEntered += CaptionButton_PointerEntered;
+                button.PointerExited += CaptionButton_PointerExited;
+                button.PointerPressed += CaptionButton_PointerPressed;
+                button.PointerReleased += CaptionButton_PointerReleased;
+            }
+
             ExtendsContentIntoTitleBar = true;
             _appWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Collapsed;
 

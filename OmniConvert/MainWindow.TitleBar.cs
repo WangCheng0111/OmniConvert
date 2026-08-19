@@ -2,6 +2,7 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
@@ -50,12 +51,38 @@ namespace OmniConvert
         [DllImport("user32.dll")]
         private static extern bool IsZoomed(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        private const int VkLeftButton = 0x01;
+
         private void InitializeNonClientInput()
         {
             _nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(_appWindow.Id);
             _nonClientInputSrc.RegionsChanged += OnRegionsChanged;
             _nonClientInputSrc.ExitedMoveSize += (_, _) => SetRegionsForCustomTitleBar();
-            _nonClientInputSrc.PointerEntered += OnNonClientPointerEntered;
             _nonClientInputSrc.PointerMoved += OnNonClientPointerMoved;
             _nonClientInputSrc.PointerPressed += OnNonClientPointerPressed;
             _nonClientInputSrc.PointerReleased += OnNonClientPointerReleased;
@@ -168,16 +195,27 @@ namespace OmniConvert
             _minimizeRect = GetRegionRect(MinimizeButton, scaleAdjustment);
             _maximizeRect = GetRegionRect(MaximizeButton, scaleAdjustment);
             var settingsRect = GetRegionRect(SettingsButton, scaleAdjustment);
-            var closeRect = GetRegionRect(CloseButton, scaleAdjustment);
-            // 关闭按钮与窗口右边缘之间的留白也纳入关闭热区，保证角落点击有效
-            var titleBarRightEdge = (int)Math.Round(AppTitleBar.ActualWidth * scaleAdjustment);
-            _closeRect = new RectInt32(closeRect.X, closeRect.Y, titleBarRightEdge - closeRect.X, closeRect.Height);
+            _closeRect = GetRegionRect(CloseButton, scaleAdjustment);
 
             ApplyRegionRects(NonClientRegionKind.Caption, new[] { captionRect });
-            ApplyRegionRects(NonClientRegionKind.Minimize, new[] { _minimizeRect });
-            ApplyRegionRects(NonClientRegionKind.Maximize, new[] { _maximizeRect });
-            ApplyRegionRects(NonClientRegionKind.Close, new[] { _closeRect });
-            ApplyRegionRects(NonClientRegionKind.Passthrough, new[] { settingsRect });
+
+            if (_isWindowDeactivated)
+            {
+                // 失焦时金刚键区域改走客户区（Passthrough），保证第一次点击
+                // 即可同时激活窗口并执行按钮操作（修复失焦首击被吞的问题）。
+                ApplyRegionRects(NonClientRegionKind.Minimize, Array.Empty<RectInt32>());
+                ApplyRegionRects(NonClientRegionKind.Maximize, Array.Empty<RectInt32>());
+                ApplyRegionRects(NonClientRegionKind.Close, Array.Empty<RectInt32>());
+                ApplyRegionRects(NonClientRegionKind.Passthrough,
+                    new[] { _minimizeRect, _maximizeRect, settingsRect, _closeRect });
+            }
+            else
+            {
+                ApplyRegionRects(NonClientRegionKind.Minimize, new[] { _minimizeRect });
+                ApplyRegionRects(NonClientRegionKind.Maximize, new[] { _maximizeRect });
+                ApplyRegionRects(NonClientRegionKind.Close, new[] { _closeRect });
+                ApplyRegionRects(NonClientRegionKind.Passthrough, new[] { settingsRect });
+            }
         }
 
         private RectInt32 GetRegionRect(FrameworkElement element, double scaleAdjustment)
@@ -203,6 +241,82 @@ namespace OmniConvert
             MaximizeButtonIcon.Glyph = IsZoomed(hWnd) ? "\uE923" : "\uE922";
         }
 
+        // 金刚键在窗口失焦时区域为 Passthrough（客户区），由以下方法执行窗口操作；
+        // 激活时区域为系统非客户区，点击由系统消费，这些方法不会被触发。
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.Minimize();
+            }
+        }
+
+        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                var hWnd = WindowNative.GetWindowHandle(this);
+                if (IsZoomed(hWnd))
+                {
+                    presenter.Restore();
+                }
+                else
+                {
+                    presenter.Maximize();
+                }
+            }
+
+            UpdateMaximizeButtonIcon();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        // 失焦时金刚键的悬停/按下视觉由按钮自身指针事件驱动（NonClient 事件
+        // 不会派发到 Passthrough 区域）；激活时按钮收不到客户区指针事件，互不冲突。
+        private void CaptionButton_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                ApplyButtonVisual(button, StatePointerOver, AnimationDuration);
+            }
+        }
+
+        private void CaptionButton_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                if ((GetAsyncKeyState(VkLeftButton) & 0x8000) != 0)
+                {
+                    // 按压拖动中退出按钮：瞬切回普通态，与激活状态下金刚键行为一致
+                    ApplyButtonVisual(button, StateNormal, TimeSpan.Zero);
+                    return;
+                }
+
+                ApplyButtonVisual(button, StateNormal, AnimationDuration);
+            }
+        }
+
+        private void CaptionButton_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                SetPressedButton(button);
+            }
+        }
+
+        private void CaptionButton_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // 与非客户区松开路径保持一致：松开后不立即恢复悬停，
+                // 保持按下视觉直到指针移动/移出（与系统标题栏一致）。
+                _pressedButton = null;
+            }
+        }
+
         // 按下期间系统会捕获指针，此时 RegionKind 仍报告按下时的区域，
         // 因此一律用 Point + 区域矩形做命中测试（而非 RegionKind）。
         private Button? GetButtonAtPoint(Point point)
@@ -217,6 +331,26 @@ namespace OmniConvert
         {
             return point.X >= rect.X && point.X < rect.X + rect.Width &&
                    point.Y >= rect.Y && point.Y < rect.Y + rect.Height;
+        }
+
+        // 检测用户是否正按住某个金刚键（用于失焦点击激活的按下场景）。
+        // 光标位置（屏幕坐标）减去窗口矩形得到窗口内物理像素坐标，
+        // 与 InputNonClientPointerSource 区域矩形坐标系一致。
+        private Button? GetPressedCaptionButton()
+        {
+            if ((GetAsyncKeyState(VkLeftButton) & 0x8000) == 0)
+            {
+                return null;
+            }
+
+            var hWnd = WindowNative.GetWindowHandle(this);
+            if (!GetWindowRect(hWnd, out var windowRect) || !GetCursorPos(out var cursor))
+            {
+                return null;
+            }
+
+            var point = new Point(cursor.X - windowRect.Left, cursor.Y - windowRect.Top);
+            return GetButtonAtPoint(point);
         }
 
         private void UpdateButtonHover(Point point)
@@ -240,14 +374,18 @@ namespace OmniConvert
             }
         }
 
-        private void OnNonClientPointerEntered(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
-        {
-            // 进入非客户区时 Point 不可靠，悬停状态交给后续的 PointerMoved 处理
-        }
-
         private void OnNonClientPointerMoved(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
         {
             _lastPointerPoint = args.Point;
+
+            if (_pressedButton != null && (GetAsyncKeyState(VkLeftButton) & 0x8000) == 0)
+            {
+                // 物理按键已松开但未收到 Released（失焦→激活的区域切换可能吞掉事件），
+                // 回退到悬停路径，避免按压语义残留。
+                _pressedButton = null;
+                UpdateButtonHover(args.Point);
+                return;
+            }
 
             if (_pressedButton == null)
             {
@@ -269,8 +407,7 @@ namespace OmniConvert
                 return;
             }
 
-            _pressedButton = button;
-            ApplyButtonVisual(button, StatePressed, TimeSpan.Zero);
+            SetPressedButton(button);
         }
 
         private void OnNonClientPointerReleased(InputNonClientPointerSource sender, NonClientPointerEventArgs args)
@@ -291,6 +428,12 @@ namespace OmniConvert
 
             ApplyButtonVisual(_hoveredButton, StateNormal, AnimationDuration);
             _hoveredButton = null;
+        }
+
+        private void SetPressedButton(Button button)
+        {
+            _pressedButton = button;
+            ApplyButtonVisual(button, StatePressed, TimeSpan.Zero);
         }
 
         private void ApplyButtonVisual(Button button, string stateName, TimeSpan duration)
@@ -358,11 +501,36 @@ namespace OmniConvert
                 {
                     return;
                 }
+
+                SetRegionsForCustomTitleBar();
+
+                var pressedButton = GetPressedCaptionButton();
+                if (pressedButton != null)
+                {
+                    // 失焦点击金刚键激活：保持按下视觉不被打断。
+                    // 以激活态颜色重新应用按下状态（图标不再是失焦的 dimmed 色），
+                    // 并记录按压状态，让后续非客户区移动继续走瞬时切换路径。
+                    SetPressedButton(pressedButton);
+                    AnimateWindowActivation(deactivated, pressedButton);
+                    return;
+                }
+
+                ResetCaptionButtonStates();
                 AnimateWindowActivation(deactivated);
             });
         }
 
-        private void AnimateWindowActivation(bool isDeactivated)
+        private void ResetCaptionButtonStates()
+        {
+            if (_hoveredButton != null)
+            {
+                ApplyButtonVisual(_hoveredButton, StateNormal, TimeSpan.Zero);
+                _hoveredButton = null;
+            }
+            _pressedButton = null;
+        }
+
+        private void AnimateWindowActivation(bool isDeactivated, Button? skipButton = null)
         {
             var targetBrush = (SolidColorBrush)App.Current.Resources[
                 isDeactivated ? "WindowCaptionForegroundDisabled" : "WindowCaptionForeground"];
@@ -385,6 +553,11 @@ namespace OmniConvert
 
             foreach (var button in _captionButtons)
             {
+                if (button == skipButton)
+                {
+                    continue;
+                }
+
                 AddAnimationTo(storyboard, button,
                     "(Control.Foreground).(SolidColorBrush.Color)",
                     ((SolidColorBrush)button.Foreground).Color,

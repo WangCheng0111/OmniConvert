@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:OmniConvert.Controls"
+    xmlns:models="using:OmniConvert.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -26,27 +27,159 @@
                 DragOver="MainCard_DragOver"
                 DragLeave="MainCard_DragLeave"
                 Drop="MainCard_Drop">
-            <Grid IsHitTestVisible="False">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Spacing="20">
-                    <Image x:Name="EmptyStateImage"
-                           Source="ms-appx:///Assets/Images/empty_state.png"
-                           Width="260"
-                           Height="165"
-                           HorizontalAlignment="Center" />
-                    <TextBlock x:Name="DropHintText"
-                               Text="把文件丢给我"
-                               FontFamily="{StaticResource HarmonyOSRegular}"
-                               FontSize="16"
-                               Foreground="{StaticResource CardHintForegroundBrush}"
+            <Grid>
+                <Grid x:Name="ContentHost">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="20"
+                                Visibility="{x:Bind ViewModel.ShowEmptyState, Converter={StaticResource BoolToVisibility}, Mode=OneWay}">
+                        <Image Source="ms-appx:///Assets/Images/empty_state.png"
+                               Width="260"
+                               Height="165"
                                HorizontalAlignment="Center" />
-                </StackPanel>
+                        <TextBlock Text="把文件丢给我"
+                                   FontFamily="{StaticResource HarmonyOSRegular}"
+                                   FontSize="16"
+                                   Foreground="{StaticResource CardHintForegroundBrush}"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <ListView x:Name="FileList"
+                              ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}"
+                              Visibility="{x:Bind ViewModel.HasFiles, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
+                              SelectionMode="Multiple"
+                              Background="Transparent"
+                              Padding="12"
+                              ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection />
+                        </ListView.ItemContainerTransitions>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Padding" Value="12,6" />
+                                <Setter Property="MinHeight" Value="0" />
+                                <Setter Property="Margin" Value="4,3" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="UseSystemFocusVisuals" Value="True" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <Grid>
+                                                <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualStateGroup.Transitions>
+                                                        <VisualTransition From="Normal" To="PointerOver" GeneratedDuration="0:0:0.15" />
+                                                        <VisualTransition From="PointerOver" To="Normal" GeneratedDuration="0:0:0.2" />
+                                                    </VisualStateGroup.Transitions>
+                                                    <VisualState x:Name="Normal">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="Transparent"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                    <VisualState x:Name="PointerOver">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="#F5F5F5"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Pressed">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="#E8E8E8"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                    <VisualState x:Name="Selected">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="#EEEEEE"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                    <VisualState x:Name="PointerOverSelected">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="#EEEEEE"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                    <VisualState x:Name="PressedSelected">
+                                                        <Storyboard>
+                                                            <ColorAnimation Storyboard.TargetName="BgBorderBrush"
+                                                                            Storyboard.TargetProperty="Color"
+                                                                            To="#E8E8E8"
+                                                                            Duration="0" />
+                                                        </Storyboard>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                                </VisualStateManager.VisualStateGroups>
+
+                                                <Border x:Name="BgBorder"
+                                                        CornerRadius="4">
+                                                    <Border.Background>
+                                                        <SolidColorBrush x:Name="BgBorderBrush" Color="Transparent" />
+                                                    </Border.Background>
+                                                </Border>
+
+                                                <ContentPresenter x:Name="ContentPresenter"
+                                                                  Content="{TemplateBinding Content}"
+                                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                                  Padding="{TemplateBinding Padding}"
+                                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:FileItem">
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <FontIcon Grid.Column="0"
+                                              Glyph="&#xE8A5;"
+                                              FontSize="14"
+                                              Foreground="{StaticResource CardHintForegroundBrush}"
+                                              VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind Name}"
+                                               FontFamily="{StaticResource HarmonyOSRegular}"
+                                               FontSize="13"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{x:Bind SizeText}"
+                                               FontFamily="{StaticResource HarmonyOSRegular}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource CardHintForegroundBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+
                 <Image x:Name="DropIcon"
                        Source="ms-appx:///Assets/Tiles/GalleryIcon.ico"
                        Width="48"
                        Height="48"
                        Opacity="0"
+                       IsHitTestVisible="False"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />
             </Grid>
