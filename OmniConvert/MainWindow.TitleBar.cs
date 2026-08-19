@@ -197,7 +197,32 @@ namespace OmniConvert
             var settingsRect = GetRegionRect(SettingsButton, scaleAdjustment);
             _closeRect = GetRegionRect(CloseButton, scaleAdjustment);
 
-            ApplyRegionRects(NonClientRegionKind.Caption, new[] { captionRect });
+            // 金刚键列的上/下空隙与按钮间空隙注册为 Caption，使其可拖动窗口
+            var buttonColumnLeft = _minimizeRect.X;
+            var buttonColumnRight = _closeRect.X + _closeRect.Width;
+            var topGapRect = new RectInt32(
+                buttonColumnLeft,
+                captionRect.Y,
+                buttonColumnRight - buttonColumnLeft,
+                _minimizeRect.Y - captionRect.Y);
+            var bottomGapRect = new RectInt32(
+                buttonColumnLeft,
+                _minimizeRect.Y + _minimizeRect.Height,
+                buttonColumnRight - buttonColumnLeft,
+                captionRect.Y + captionRect.Height - (_minimizeRect.Y + _minimizeRect.Height));
+            var minMaxGapRect = new RectInt32(
+                _minimizeRect.X + _minimizeRect.Width,
+                _minimizeRect.Y,
+                _maximizeRect.X - (_minimizeRect.X + _minimizeRect.Width),
+                _minimizeRect.Height);
+            var maxCloseGapRect = new RectInt32(
+                _maximizeRect.X + _maximizeRect.Width,
+                _maximizeRect.Y,
+                _closeRect.X - (_maximizeRect.X + _maximizeRect.Width),
+                _maximizeRect.Height);
+
+            ApplyRegionRects(NonClientRegionKind.Caption,
+                new[] { captionRect, topGapRect, bottomGapRect, minMaxGapRect, maxCloseGapRect });
 
             if (_isWindowDeactivated)
             {
