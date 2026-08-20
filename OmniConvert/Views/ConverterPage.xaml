@@ -19,6 +19,7 @@
         <Border x:Name="MainCard"
                 Grid.Column="0"
                 AllowDrop="True"
+                Translation="0,0,4"
                 Background="{StaticResource CardBackgroundBrush}"
                 BorderBrush="{StaticResource CardBorderBrush}"
                 BorderThickness="1"
@@ -27,6 +28,9 @@
                 DragOver="MainCard_DragOver"
                 DragLeave="MainCard_DragLeave"
                 Drop="MainCard_Drop">
+            <Border.Shadow>
+                <ThemeShadow />
+            </Border.Shadow>
             <Grid>
                 <Grid x:Name="ContentHost">
                     <StackPanel HorizontalAlignment="Center"
@@ -187,10 +191,14 @@
 
         <Border x:Name="SideCard"
                 Grid.Column="1"
+                Translation="0,0,4"
                 Background="{StaticResource CardBackgroundBrush}"
                 BorderBrush="{StaticResource CardBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12">
+            <Border.Shadow>
+                <ThemeShadow />
+            </Border.Shadow>
             <StackPanel Margin="16">
                 <TextBlock Text="目标格式"
                            FontFamily="{StaticResource HarmonyOSRegular}"
