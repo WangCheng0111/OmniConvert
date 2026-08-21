@@ -25,8 +25,7 @@ public partial class ConverterViewModel : ObservableObject
 
     public bool ShowEmptyState => !HasFiles;
 
-    public bool CanSelectTarget => SelectedFiles.Count > 0
-        && SelectedFiles.All(file => file.SourceCategory == FormatCategory.Document);
+    public bool CanSelectTarget => TryGetSelectedCategory(out _);
 
     public bool CanStart => !IsConverting
         && WordAvailable
@@ -63,6 +62,8 @@ public partial class ConverterViewModel : ObservableObject
     public partial string? LastOutputDirectory { get; set; }
 
     private readonly WordConverter _wordConverter = new();
+
+    private readonly PdfConverter _pdfConverter = new();
 
     private CancellationTokenSource? _conversionCts;
 
@@ -112,12 +113,33 @@ public partial class ConverterViewModel : ObservableObject
         OnPropertyChanged(nameof(CanStart));
     }
 
+    private bool TryGetSelectedCategory(out FormatCategory category)
+    {
+        category = default;
+        if (SelectedFiles.Count == 0)
+        {
+            return false;
+        }
+
+        var categories = SelectedFiles
+            .Select(file => file.SourceCategory)
+            .Distinct()
+            .ToList();
+        if (categories.Count != 1 || categories[0] is null)
+        {
+            return false;
+        }
+
+        category = categories[0]!.Value;
+        return true;
+    }
+
     private void UpdateTargetState()
     {
         IReadOnlyList<FormatDefinition> targets;
-        if (CanSelectTarget)
+        if (TryGetSelectedCategory(out var category))
         {
-            targets = FormatCatalog.GetTargets(FormatCategory.Document);
+            targets = FormatCatalog.GetTargets(category);
             TargetPlaceholderText = "请选择文件";
         }
         else
@@ -190,7 +212,8 @@ public partial class ConverterViewModel : ObservableObject
                 try
                 {
                     var converter = GetConverter(file.SourceCategory!.Value);
-                    var outputPath = OutputPathService.ResolveOutputPath(file.FullPath, target.Extension);
+                    var outputExtension = converter.GetOutputExtension(target);
+                    var outputPath = OutputPathService.ResolveOutputPath(file.FullPath, outputExtension);
                     await converter.ConvertAsync(file.FullPath, outputPath, file.SourceCategory.Value, target, token);
 
                     file.OutputPath = outputPath;
@@ -263,6 +286,7 @@ public partial class ConverterViewModel : ObservableObject
         return category switch
         {
             FormatCategory.Document => _wordConverter,
+            FormatCategory.Pdf => _pdfConverter,
             _ => throw new InvalidOperationException($"暂不支持 {FormatCatalog.GetDisplayName(category)} 类别的转换。")
         };
     }

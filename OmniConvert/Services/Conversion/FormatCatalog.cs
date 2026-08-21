@@ -11,9 +11,20 @@ public static class FormatCatalog
         "doc", "docx"
     };
 
+    private static readonly HashSet<string> PdfInputs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "pdf"
+    };
+
     private static readonly FormatDefinition[] DocumentTargetDefinitions =
     {
         new(FormatCategory.Document, "pdf", "PDF")
+    };
+
+    private static readonly FormatDefinition[] PdfTargetDefinitions =
+    {
+        new(FormatCategory.Pdf, "png", "PNG"),
+        new(FormatCategory.Pdf, "jpg", "JPG")
     };
 
     public static FormatCategory? GetCategory(string extension)
@@ -21,6 +32,10 @@ public static class FormatCatalog
         if (DocumentInputs.Contains(extension))
         {
             return FormatCategory.Document;
+        }
+        if (PdfInputs.Contains(extension))
+        {
+            return FormatCategory.Pdf;
         }
         return null;
     }
@@ -30,6 +45,7 @@ public static class FormatCatalog
         return category switch
         {
             FormatCategory.Document => DocumentTargetDefinitions,
+            FormatCategory.Pdf => PdfTargetDefinitions,
             _ => Array.Empty<FormatDefinition>()
         };
     }

@@ -48,6 +48,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Tools\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
