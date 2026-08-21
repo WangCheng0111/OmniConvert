@@ -47,6 +47,7 @@ public sealed partial class CustomComboBox : UserControl
             _closeStoryboard.Stop();
             UpdateBodyColor();
         };
+        IsEnabledChanged += OnIsEnabledChanged;
         UpdateBodyColor();
     }
 
@@ -362,8 +363,34 @@ public sealed partial class CustomComboBox : UserControl
         }
     }
 
+    private void OnIsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (!IsEnabled)
+        {
+            // 与开始转换按钮的禁用同机制:仅整体降透明度,不换任何颜色。
+            // 禁用瞬间硬关弹层并清空交互状态,避免悬停色卡死与半开弹层残留。
+            _isPointerOver = false;
+            _isPopupOpen = false;
+            _closeAnimationRunning = false;
+            _openStoryboard.Stop();
+            _closeStoryboard.Stop();
+            DropDownPopup.IsOpen = false;
+            ChevronTransform.Angle = 0;
+            PopupBorder.Opacity = 1;
+            PopupBorderTransform.Y = 0;
+        }
+
+        Opacity = IsEnabled ? 1.0 : 0.5;
+        UpdateBodyColor();
+    }
+
     private void OpenPopup()
     {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         _isPopupOpen = true;
         _closeAnimationRunning = false;
         Focus(FocusState.Programmatic);

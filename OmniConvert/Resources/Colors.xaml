@@ -9,5 +9,6 @@
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#333333" />
     <SolidColorBrush x:Key="DropCardBorderBrush" Color="#0078D4" />
     <SolidColorBrush x:Key="DropCardBackgroundBrush" Color="#B0E5E5E5" />
+    <SolidColorBrush x:Key="WordHintForegroundBrush" Color="#C42B1C" />
 
 </ResourceDictionary>

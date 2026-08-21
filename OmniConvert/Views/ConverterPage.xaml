@@ -52,6 +52,7 @@
                               ItemsSource="{x:Bind ViewModel.Files, Mode=OneWay}"
                               Visibility="{x:Bind ViewModel.HasFiles, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
                               SelectionMode="Multiple"
+                              SelectionChanged="FileList_SelectionChanged"
                               Background="Transparent"
                               Padding="12"
                               ScrollViewer.VerticalScrollBarVisibility="Hidden">
@@ -210,8 +211,11 @@
                 <controls:CustomComboBox x:Name="TargetFormatBox"
                                          Width="240"
                                          HorizontalAlignment="Center"
-                                         PlaceholderText="请选择文件"
-                                         IsEnabled="False" />
+                                         PlaceholderText="{x:Bind ViewModel.TargetPlaceholderText, Mode=OneWay}"
+                                         ItemsSource="{x:Bind ViewModel.TargetFormats, Mode=OneWay}"
+                                         DisplayMemberPath="DisplayName"
+                                         SelectedItem="{x:Bind ViewModel.SelectedTarget, Mode=TwoWay}"
+                                         IsEnabled="{x:Bind ViewModel.CanSelectTarget, Mode=OneWay}" />
 
                 <Button x:Name="StartConvertButton"
                         Width="240"
@@ -220,7 +224,36 @@
                         HorizontalAlignment="Center"
                         Style="{StaticResource StartConvertButtonStyle}"
                         Content="开始转换"
-                        IsEnabled="False" />
+                        IsEnabled="{x:Bind ViewModel.CanStart, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.StartCommand}" />
+
+                <Button Width="240"
+                        Height="32"
+                        Margin="0,8,0,0"
+                        HorizontalAlignment="Center"
+                        Content="取消"
+                        Visibility="{x:Bind ViewModel.IsConverting, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.CancelCommand}" />
+
+                <TextBlock Text="未检测到 Microsoft Word,无法转换 Word 文档。请安装 Office 后重试。"
+                           Visibility="{x:Bind ViewModel.ShowWordRequiredHint, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
+                           Foreground="{StaticResource WordHintForegroundBrush}"
+                           FontFamily="{StaticResource HarmonyOSRegular}"
+                           FontSize="12"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Margin="0,12,0,0" />
+
+                <InfoBar Margin="0,16,0,0"
+                         Severity="Informational"
+                         IsOpen="{x:Bind ViewModel.ShowSummary, Mode=OneWay}"
+                         Message="{x:Bind ViewModel.SummaryText, Mode=OneWay}"
+                         IsClosable="True">
+                    <InfoBar.ActionButton>
+                        <Button Content="打开输出文件夹"
+                                Command="{x:Bind ViewModel.OpenOutputFolderCommand}" />
+                    </InfoBar.ActionButton>
+                </InfoBar>
             </StackPanel>
         </Border>
     </Grid>

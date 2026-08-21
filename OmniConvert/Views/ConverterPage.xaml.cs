@@ -110,5 +110,10 @@ public sealed partial class ConverterPage : Page
         var paths = items.OfType<StorageFile>().Select(f => f.Path);
         ViewModel.AddFiles(paths);
     }
+
+    private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ViewModel.SetSelectedFiles(FileList.SelectedItems);
+    }
 }
 
