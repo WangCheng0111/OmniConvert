@@ -40,6 +40,11 @@ namespace OmniConvert
         [DllImport("comctl32.dll")]
         private static extern nint DefSubclassProc(nint hWnd, uint uMsg, nint wParam, nint lParam);
 
+        private const int DwmwaExtendedFrameBounds = 9;
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmGetWindowAttribute(nint hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
+
         private DispatcherQueueTimer? _hoverCheckTimer;
 
         private void InitializeWindowSubclass()
@@ -91,12 +96,24 @@ namespace OmniConvert
         private Point? GetCursorWindowPoint()
         {
             var hWnd = WindowNative.GetWindowHandle(this);
-            if (!GetWindowRect(hWnd, out var windowRect) || !GetCursorPos(out var cursor))
+            if (!TryGetVisibleWindowRect(hWnd, out var windowRect) || !GetCursorPos(out var cursor))
             {
                 return null;
             }
 
             return new Point(cursor.X - windowRect.Left, cursor.Y - windowRect.Top);
+        }
+
+        private static bool TryGetVisibleWindowRect(nint hWnd, out RECT rect)
+        {
+            // DWM 合成下 GetWindowRect 可能包含阴影边距，优先取不含阴影的
+            // 可见框架矩形（DWMWA_EXTENDED_FRAME_BOUNDS），失败时回退 GetWindowRect。
+            if (DwmGetWindowAttribute(hWnd, DwmwaExtendedFrameBounds, out rect, Marshal.SizeOf<RECT>()) == 0)
+            {
+                return true;
+            }
+
+            return GetWindowRect(hWnd, out rect);
         }
 
         private RectInt32 GetCaptionButtonRect(Button button)
