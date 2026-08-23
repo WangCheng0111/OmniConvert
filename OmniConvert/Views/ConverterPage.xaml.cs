@@ -1,5 +1,6 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using OmniConvert.ViewModels;
@@ -7,7 +8,9 @@ using System;
 using System.Linq;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.UI;
+using WinRT.Interop;
 
 namespace OmniConvert.Views;
 
@@ -109,6 +112,39 @@ public sealed partial class ConverterPage : Page
         var items = await e.DataView.GetStorageItemsAsync();
         var paths = items.OfType<StorageFile>().Select(f => f.Path);
         ViewModel.AddFiles(paths);
+    }
+
+    private bool _isPickerOpen;
+
+    private async void EmptyOverlay_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (ViewModel.HasFiles || _isPickerOpen)
+        {
+            return;
+        }
+
+        if (App.MainWindow is not Window window)
+        {
+            return;
+        }
+
+        var picker = new FileOpenPicker();
+        picker.FileTypeFilter.Add("*");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
+
+        _isPickerOpen = true;
+        try
+        {
+            var files = await picker.PickMultipleFilesAsync();
+            if (files.Count > 0)
+            {
+                ViewModel.AddFiles(files.Select(file => file.Path));
+            }
+        }
+        finally
+        {
+            _isPickerOpen = false;
+        }
     }
 
     private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -187,6 +187,15 @@
                        IsHitTestVisible="False"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />
+
+                <controls:HandCursorGrid Background="Transparent"
+                                         AllowDrop="True"
+                                         Visibility="{x:Bind ViewModel.ShowEmptyState, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
+                                         Tapped="EmptyOverlay_Tapped"
+                                         DragEnter="MainCard_DragEnter"
+                                         DragOver="MainCard_DragOver"
+                                         DragLeave="MainCard_DragLeave"
+                                         Drop="MainCard_Drop" />
             </Grid>
         </Border>
 
@@ -231,6 +240,7 @@
                         Height="32"
                         Margin="0,8,0,0"
                         HorizontalAlignment="Center"
+                        Style="{StaticResource StartConvertButtonStyle}"
                         Content="取消"
                         Visibility="{x:Bind ViewModel.IsConverting, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
                         Command="{x:Bind ViewModel.CancelCommand}" />
