@@ -4,9 +4,14 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
-  IgnorableNamespaces="uap rescap systemai">
+  IgnorableNamespaces="uap uap3 desktop desktop4 desktop5 com rescap systemai">
 
   <Identity
     Name="2d40a5e2-fc23-4e7c-8964-6b3c400c56c1"
@@ -49,6 +54,48 @@
         </uap:DefaultTile >
         <uap:SplashScreen Image="Assets\Tiles\SplashScreen.png" />
       </uap:VisualElements>
+
+      <Extensions>
+        <!-- 执行别名：打包后 %LOCALAPPDATA%\Microsoft\WindowsApps\OmniConvert.exe
+             可被注册表 command 直接调用并传递命令行参数（二级菜单打包场景）。 -->
+        <uap3:Extension Category="windows.appExecutionAlias" Executable="OmniConvert.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap3:AppExecutionAlias>
+            <desktop:ExecutionAlias Alias="OmniConvert.exe" />
+          </uap3:AppExecutionAlias>
+        </uap3:Extension>
+
+        <!-- Win11 右键菜单：具体扩展名进一级菜单；任意文件的导入入口
+             由二级菜单（注册表"*"）承担，避免 "Type=*" 与具体扩展名
+             在一级菜单重叠显示两条。 -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type=".doc">
+              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".docx">
+              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".pdf">
+              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".png">
+              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type=".jpg">
+              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+
+        <!-- IExplorerCommand 进程外 COM 服务器（以 -contextmenu 参数启动）。 -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="OmniConvert.exe" Arguments="-contextmenu" DisplayName="OmniConvert Context Menu">
+              <com:Class Id="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" DisplayName="OmniConvert Context Menu" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

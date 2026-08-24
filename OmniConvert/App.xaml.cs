@@ -1,25 +1,10 @@
 ﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
+using Microsoft.Windows.AppLifecycle;
 using OmniConvert.Services;
+using OmniConvert.Services.ShellIntegration;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace OmniConvert
 {
@@ -28,30 +13,84 @@ namespace OmniConvert
     /// </summary>
     public partial class App : Application
     {
+        public const string MainInstanceKey = "OmniConvertMain";
+
         private Window? _window;
 
         public static Window? MainWindow { get; private set; }
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _ = Task.Run(ShortcutService.EnsureDesktopShortcut);
+            var commandLineArgs = Environment.GetCommandLineArgs();
+
+            // 一级菜单 COM 服务器模式：Shell 以 -contextmenu 启动本进程，
+            // 只注册 IExplorerCommand 类对象，不创建主窗口。
+            if (commandLineArgs.Any(a => string.Equals(a, "-contextmenu", StringComparison.OrdinalIgnoreCase)))
+            {
+                ExplorerCommandServer.RunServer();
+                return;
+            }
+
+            var importPaths = ImportCommandLine.ParseImportPaths(commandLineArgs);
+
+            // 单实例：已有实例则把待导入路径写入通道文件，唤醒现有实例后退出
+            var mainInstance = AppInstance.FindOrRegisterForKey(MainInstanceKey);
+            if (!mainInstance.IsCurrent)
+            {
+                if (importPaths.Count > 0)
+                {
+                    PendingImportStore.Write(importPaths);
+                }
+
+                // AppActivationArguments 无公开构造函数：把当前进程的激活参数
+                // 原样转发给现有实例（仅作为唤醒信号，数据走文件通道）。
+                var activationArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+                if (activationArgs is not null)
+                {
+                    mainInstance.RedirectActivationToAsync(activationArgs)
+                        .AsTask().GetAwaiter().GetResult();
+                }
+                Environment.Exit(0);
+                return;
+            }
+
+            AppInstance.GetCurrent().Activated += OnActivated;
 
             _window = new MainWindow();
             MainWindow = _window;
             _window.Activate();
+
+            if (importPaths.Count > 0)
+            {
+                ((MainWindow)_window).ImportFiles(importPaths);
+            }
+            ImportPendingFiles();
+
+            _ = Task.Run(ShortcutService.EnsureDesktopShortcut);
+            _ = Task.Run(ContextMenuRegistration.EnsureRegistered);
+        }
+
+        private void OnActivated(object? sender, AppActivationArguments e)
+        {
+            // 重定向唤醒（信使/COM 场景写入的路径经文件通道传递）
+            if (MainWindow is MainWindow window)
+            {
+                window.DispatcherQueue.TryEnqueue(ImportPendingFiles);
+            }
+        }
+
+        private void ImportPendingFiles()
+        {
+            var paths = PendingImportStore.ReadAndClear();
+            if (paths.Count > 0 && MainWindow is MainWindow window)
+            {
+                window.ImportFiles(paths);
+            }
         }
     }
 }

@@ -95,7 +95,7 @@
             </Button>
         </Grid>
 
-        <views:ConverterPage Grid.Row="1" />
+        <views:ConverterPage x:Name="ConverterHost" Grid.Row="1" />
 
         <views:SettingsPage x:Name="settingsHost"
                             Grid.RowSpan="2" />

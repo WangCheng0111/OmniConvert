@@ -1,9 +1,12 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using OmniConvert.ViewModels;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Windows.ApplicationModel;
 using Windows.Graphics;
+using WinRT.Interop;
 
 namespace OmniConvert
 {
@@ -57,6 +60,25 @@ namespace OmniConvert
         {
             ViewModel.CloseSettingsCommand.Execute(null);
         }
+
+        /// <summary>
+        /// 右键菜单导入：把路径加入左卡片文件列表并置前窗口。
+        /// 必须在 UI 线程调用。
+        /// </summary>
+        public void ImportFiles(IReadOnlyList<string> paths)
+        {
+            ConverterHost.ViewModel.AddFiles(paths);
+            ShowAndActivate();
+        }
+
+        public void ShowAndActivate()
+        {
+            AppWindow.Show();
+            SetForegroundWindow(WindowNative.GetWindowHandle(this));
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(nint hWnd);
 
         private void CenterWindow()
         {
