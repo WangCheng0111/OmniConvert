@@ -72,7 +72,6 @@ namespace OmniConvert
             ImportPendingFiles();
 
             _ = Task.Run(ShortcutService.EnsureDesktopShortcut);
-            _ = Task.Run(ContextMenuRegistration.EnsureRegistered);
         }
 
         private void OnActivated(object? sender, AppActivationArguments e)

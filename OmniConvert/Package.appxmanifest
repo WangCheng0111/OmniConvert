@@ -16,7 +16,7 @@
   <Identity
     Name="2d40a5e2-fc23-4e7c-8964-6b3c400c56c1"
     Publisher="CN=31059"
-    Version="1.0.0.0" />
+    Version="1.1.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="2d40a5e2-fc23-4e7c-8964-6b3c400c56c1" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -64,9 +64,9 @@
           </uap3:AppExecutionAlias>
         </uap3:Extension>
 
-        <!-- Win11 右键菜单：具体扩展名进一级菜单；任意文件的导入入口
-             由二级菜单（注册表"*"）承担，避免 "Type=*" 与具体扩展名
-             在一级菜单重叠显示两条。 -->
+        <!-- Win11 右键菜单：注册软件支持的输入格式（doc/docx/pdf）。
+             manifest 的 verb 会同时出现在一级菜单与二级菜单（经典菜单），
+             两级行为一致，无需额外注册表方案。 -->
         <desktop4:Extension Category="windows.fileExplorerContextMenus">
           <desktop4:FileExplorerContextMenus>
             <desktop5:ItemType Type=".doc">
@@ -76,12 +76,6 @@
               <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
             </desktop5:ItemType>
             <desktop5:ItemType Type=".pdf">
-              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".png">
-              <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
-            </desktop5:ItemType>
-            <desktop5:ItemType Type=".jpg">
               <desktop5:Verb Id="ImportToOmniConvert" Clsid="218a51b4-cea7-4b37-8e74-fc5e56ae12d2" />
             </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>

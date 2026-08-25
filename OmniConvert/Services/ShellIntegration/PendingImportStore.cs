@@ -6,10 +6,12 @@ using System.Linq;
 namespace OmniConvert.Services.ShellIntegration;
 
 /// <summary>
-/// 跨进程导入通道：写入方（二级菜单启动的进程、一级菜单 COM 服务器）把待导入
-/// 路径写入 %LOCALAPPDATA%\OmniConvert\PendingImports 下的临时文件，主窗口实例
-/// 在 OnLaunched/OnActivated 中读取并清理。绕开 AppActivationArguments 无法
-/// 可靠携带自定义数据的限制。
+/// 跨进程导入通道：写入方把待导入路径写入临时文件，主窗口实例在
+/// OnLaunched/OnActivated 中读取并清理。目录为 Environment.GetFolderPath(
+/// SpecialFolder.LocalApplicationData) 下的 OmniConvert\PendingImports——
+/// 打包运行时该 API 被重定向到包私有目录（...\Packages\&lt;包族名&gt;\LocalCache\Local），
+/// 写入方与读取方同属一个包、路径一致，通道正常工作。
+/// 绕开 AppActivationArguments 无法可靠携带自定义数据的限制。
 /// </summary>
 public static class PendingImportStore
 {
