@@ -7,8 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -58,8 +56,7 @@ public partial class ConverterViewModel : ObservableObject
     [ObservableProperty]
     public partial string SummaryText { get; set; } = "";
 
-    [ObservableProperty]
-    public partial string? LastOutputDirectory { get; set; }
+    public IReadOnlyList<string> LastOutputPaths { get; private set; } = Array.Empty<string>();
 
     private readonly WordConverter _wordConverter = new();
 
@@ -202,7 +199,7 @@ public partial class ConverterViewModel : ObservableObject
         var succeeded = 0;
         var failed = 0;
         var cancelled = 0;
-        string? outputDirectory = null;
+        var outputPaths = new List<string>();
 
         try
         {
@@ -219,7 +216,7 @@ public partial class ConverterViewModel : ObservableObject
                     file.OutputPath = outputPath;
                     file.Status = ConversionStatus.Succeeded;
                     succeeded++;
-                    outputDirectory ??= Path.GetDirectoryName(outputPath);
+                    outputPaths.Add(outputPath);
                 }
                 catch (OperationCanceledException)
                 {
@@ -249,9 +246,9 @@ public partial class ConverterViewModel : ObservableObject
                 file.Status = ConversionStatus.None;
             }
 
-            if (outputDirectory is not null)
+            if (outputPaths.Count > 0)
             {
-                LastOutputDirectory = outputDirectory;
+                LastOutputPaths = outputPaths;
             }
 
             IsConverting = false;
@@ -272,13 +269,12 @@ public partial class ConverterViewModel : ObservableObject
     [RelayCommand]
     private void OpenOutputFolder()
     {
-        var directory = LastOutputDirectory;
-        if (string.IsNullOrEmpty(directory))
+        if (LastOutputPaths.Count == 0)
         {
             return;
         }
 
-        Process.Start(new ProcessStartInfo("explorer.exe", directory) { UseShellExecute = true });
+        ExplorerFolderService.OpenAndSelect(LastOutputPaths);
     }
 
     private IConverter GetConverter(FormatCategory category)
