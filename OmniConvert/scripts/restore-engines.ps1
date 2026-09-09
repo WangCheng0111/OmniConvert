@@ -47,7 +47,8 @@ function Download-File {
 }
 
 $pdftoppmPath = Join-Path $ToolsDir "poppler\Library\bin\pdftoppm.exe"
-if (Test-Path -LiteralPath $pdftoppmPath) {
+$cMapPath = Join-Path $ToolsDir "poppler\share\poppler\cMap\Adobe-GB1\UniGB-UCS2-H"
+if ((Test-Path -LiteralPath $pdftoppmPath) -and (Test-Path -LiteralPath $cMapPath)) {
     Write-Host "Poppler 引擎已就绪: $pdftoppmPath"
     exit 0
 }
@@ -70,19 +71,29 @@ try {
         throw "解压结果中未找到 pdftoppm.exe,下载包可能不完整。"
     }
 
-    # 布局约定: Tools\poppler\Library(含 bin\pdftoppm.exe 与 share 数据目录)
+    # 布局约定: Tools\poppler 完整保留原压缩包根目录结构
+    # (Library\bin\pdftoppm.exe 与 share\poppler\cMap 数据并排)。
+    # 注意:share 目录包含 Adobe-GB1 等 CMap 语言包,缺失会导致
+    # 未嵌入字体的 PDF 渲染为空白(实测: 班级课表 PDF)。
     $libraryDir = Split-Path -Parent $exe.Directory
+    $sourceRoot = Split-Path -Parent $libraryDir
     $destRoot = Join-Path $ToolsDir "poppler"
     New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
-    if (Test-Path -LiteralPath (Join-Path $destRoot "Library")) {
-        Remove-Item -LiteralPath (Join-Path $destRoot "Library") -Recurse -Force
-    }
 
-    Write-Host "移动 Poppler 到 $destRoot\Library ..."
-    Move-Item -LiteralPath $libraryDir -Destination (Join-Path $destRoot "Library")
+    Write-Host "移动 Poppler(含 share 数据)到 $destRoot ..."
+    Get-ChildItem -LiteralPath $sourceRoot -Force | ForEach-Object {
+        $destination = Join-Path $destRoot $_.Name
+        if (Test-Path -LiteralPath $destination) {
+            Remove-Item -LiteralPath $destination -Recurse -Force
+        }
+        Move-Item -LiteralPath $_.FullName -Destination $destRoot
+    }
 
     if (-not (Test-Path -LiteralPath (Join-Path $destRoot "Library\bin\pdftoppm.exe"))) {
         throw "Poppler 移动后校验失败,请删除 $destRoot 后重试。"
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $destRoot "share\poppler\cMap\Adobe-GB1\UniGB-UCS2-H"))) {
+        throw "Poppler CMap 语言包数据缺失,请删除 $destRoot 后重试。"
     }
 
     Write-Host "Poppler 引擎安装完成: $(Join-Path $destRoot 'Library\bin\pdftoppm.exe')"
