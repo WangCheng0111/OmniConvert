@@ -24,7 +24,8 @@ public static class FormatCatalog
     private static readonly FormatDefinition[] PdfTargetDefinitions =
     {
         new(FormatCategory.Pdf, "png", "PNG"),
-        new(FormatCategory.Pdf, "jpg", "JPG")
+        new(FormatCategory.Pdf, "jpg", "JPG"),
+        new(FormatCategory.Pdf, "docx", "DOCX")
     };
 
     public static FormatCategory? GetCategory(string extension)

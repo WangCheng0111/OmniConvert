@@ -245,7 +245,7 @@
                         Visibility="{x:Bind ViewModel.IsConverting, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
                         Command="{x:Bind ViewModel.CancelCommand}" />
 
-                <TextBlock Text="未检测到 Microsoft Word,无法转换 Word 文档。请安装 Office 后重试。"
+                <TextBlock Text="未检测到 Microsoft Word,无法完成该转换。请安装 Office 后重试。"
                            Visibility="{x:Bind ViewModel.ShowWordRequiredHint, Converter={StaticResource BoolToVisibility}, Mode=OneWay}"
                            Foreground="{StaticResource WordHintForegroundBrush}"
                            FontFamily="{StaticResource HarmonyOSRegular}"

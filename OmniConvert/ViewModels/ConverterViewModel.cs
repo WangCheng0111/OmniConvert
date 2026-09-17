@@ -25,12 +25,19 @@ public partial class ConverterViewModel : ObservableObject
 
     public bool CanSelectTarget => TryGetSelectedCategory(out _);
 
-    public bool CanStart => !IsConverting
-        && WordAvailable
-        && CanSelectTarget
-        && SelectedTarget is not null;
+    /// <summary>
+    /// 当前所选目标是否需要 Microsoft Word(仅 Word→PDF 需要;PDF→DOCX 由
+    /// 内置 pdf2docx 引擎、PDF→PNG/JPG 由内置 Poppler 完成,均不需要 Word)。
+    /// </summary>
+    public bool SelectedTargetRequiresWord => TryGetSelectedCategory(out var category)
+        && category == FormatCategory.Document;
 
-    public bool ShowWordRequiredHint => CanSelectTarget && !WordAvailable;
+    public bool CanStart => !IsConverting
+        && CanSelectTarget
+        && SelectedTarget is not null
+        && (!SelectedTargetRequiresWord || WordAvailable);
+
+    public bool ShowWordRequiredHint => SelectedTargetRequiresWord && !WordAvailable;
 
     public IReadOnlyList<FormatDefinition> TargetFormats { get; private set; } = Array.Empty<FormatDefinition>();
 
@@ -39,6 +46,8 @@ public partial class ConverterViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanStart))]
+    [NotifyPropertyChangedFor(nameof(SelectedTargetRequiresWord))]
+    [NotifyPropertyChangedFor(nameof(ShowWordRequiredHint))]
     public partial FormatDefinition? SelectedTarget { get; set; }
 
     [ObservableProperty]
@@ -61,6 +70,8 @@ public partial class ConverterViewModel : ObservableObject
     private readonly WordConverter _wordConverter = new();
 
     private readonly PdfConverter _pdfConverter = new();
+
+    private readonly PdfWordConverter _pdfWordConverter = new();
 
     private CancellationTokenSource? _conversionCts;
 
@@ -106,6 +117,7 @@ public partial class ConverterViewModel : ObservableObject
     {
         UpdateTargetState();
         OnPropertyChanged(nameof(CanSelectTarget));
+        OnPropertyChanged(nameof(SelectedTargetRequiresWord));
         OnPropertyChanged(nameof(ShowWordRequiredHint));
         OnPropertyChanged(nameof(CanStart));
     }
@@ -164,10 +176,10 @@ public partial class ConverterViewModel : ObservableObject
 
         // 每次启动转换前重新探测 Word,支持用户安装 Office 后不重启应用。
         WordAvailable = WordConverter.IsAvailable;
-        if (!WordAvailable)
+        if (SelectedTargetRequiresWord && !WordAvailable)
         {
             ShowSummary = true;
-            SummaryText = "未检测到 Microsoft Word,无法转换 Word 文档。请安装 Office 后重试。";
+            SummaryText = "未检测到 Microsoft Word,无法完成该转换。请安装 Office 后重试。";
             return;
         }
 
@@ -208,7 +220,7 @@ public partial class ConverterViewModel : ObservableObject
                 file.Status = ConversionStatus.Running;
                 try
                 {
-                    var converter = GetConverter(file.SourceCategory!.Value);
+                    var converter = GetConverter(file.SourceCategory!.Value, target);
                     var outputExtension = converter.GetOutputExtension(target);
                     var outputPath = OutputPathService.ResolveOutputPath(file.FullPath, outputExtension);
                     await converter.ConvertAsync(file.FullPath, outputPath, file.SourceCategory.Value, target, token);
@@ -277,12 +289,14 @@ public partial class ConverterViewModel : ObservableObject
         ExplorerFolderService.OpenAndSelect(LastOutputPaths);
     }
 
-    private IConverter GetConverter(FormatCategory category)
+    private IConverter GetConverter(FormatCategory category, FormatDefinition target)
     {
         return category switch
         {
             FormatCategory.Document => _wordConverter,
-            FormatCategory.Pdf => _pdfConverter,
+            FormatCategory.Pdf => string.Equals(target.Extension, "docx", StringComparison.OrdinalIgnoreCase)
+                ? _pdfWordConverter
+                : _pdfConverter,
             _ => throw new InvalidOperationException($"暂不支持 {FormatCatalog.GetDisplayName(category)} 类别的转换。")
         };
     }

@@ -59,4 +59,28 @@ public static class EngineLocator
         }
         return null;
     }
+
+    private static string? LocateInTools(string relativePath)
+    {
+        var tools = GetToolsRoot();
+        if (tools is null)
+        {
+            return null;
+        }
+
+        var candidate = Path.Combine(tools, relativePath);
+        return File.Exists(candidate) ? candidate : null;
+    }
+
+    /// <summary>定位 pdf2docx 引擎的嵌入式 Python 运行时。</summary>
+    public static string? LocatePdf2docxPython()
+    {
+        return LocateInTools(Path.Combine("pdf2docx", "python", "python.exe"));
+    }
+
+    /// <summary>定位 pdf2docx 引擎启动器(含空格/伪粗体后处理)。</summary>
+    public static string? LocatePdf2docxLauncher()
+    {
+        return LocateInTools(Path.Combine("pdf2docx", "convert.py"));
+    }
 }
